@@ -4,7 +4,8 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [ring "1.3.2"]
                  [liberator "0.13"]
-                 [compojure "1.3.4"]]
+                 [compojure "1.3.4"]
+                 [com.taoensso/carmine "2.12.0"]]
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :aot [restodoservice.core]
   :main restodoservice.core
