@@ -4,13 +4,13 @@
             [ring.middleware.params :refer [wrap-params]]
             [compojure.core :refer [defroutes ANY]]
             [clojure.edn :as edn]
-            [restodoservice.ping :as ping]
+            [restodoservice.ping :refer [ping]]
             [restodoservice.util :as util])
   (:gen-class))
 
 (defroutes app
   (ANY "/foo" [] (resource :available-media-types ["text/json"]
-                           :handle-ok (str "{ \"foo\" : \""  (ping/ping-redis)  "\" }"))))
+                           :handle-ok (str "{ \"foo\" : \""  (ping)  "\" }"))))
 
 (def handler 
   (-> app 
