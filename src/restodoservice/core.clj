@@ -4,7 +4,6 @@
             [ring.middleware.params :refer [wrap-params]]
             [compojure.core :refer [defroutes ANY]]
             [clojure.edn :as edn]
-            [restodoservice.ping :refer [ping]]
             [restodoservice.util :as util]
             [restodoservice.user :as user]
             [clojure.data.json :as json])

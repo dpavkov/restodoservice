@@ -1,2 +1,9 @@
 target
 config.edn
+pom.xml
+lib
+.lein-deps-sum
+.lein-failures
+.lein-plugins/
+classes/
+

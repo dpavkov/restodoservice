@@ -6,7 +6,8 @@
                  [liberator "0.13"]
                  [compojure "1.3.4"]
                  [com.taoensso/carmine "2.12.0"]
-                 [com.draines/postal "1.11.3"]]
+                 [com.draines/postal "1.11.3"]
+                 [org.clojars.runa/conjure "2.1.3"]]
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :aot [restodoservice.core]
   :main restodoservice.core

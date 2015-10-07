@@ -25,13 +25,18 @@
       (send-verification-mail email verification-token verification-url)
       verification-token)))
 
+;; Returns true if and only if refs are equal and not nil
+(defn match-and-not-null [ref ref-2]
+  (and (= ref ref-2) (not (nil? ref))))
+
 ;; Takes email and token, checks if token is the same one as the one in db, and deletes it 
 ;; if it maches, thus allowing user to login. Returns true if verification was successful, false otherwise
 (defn verify [email token]
-  (let [persisted-token ((util/lookup-hash email) "verification-token")]
-    (if (and (= token persisted-token)
-             (not (nil? token)))
-      (do (util/wcar* (car/hdel email :verification-token))
-        true)
-      false)))
+  (let [should-verify (match-and-not-null 
+                        token 
+                        ((util/lookup-hash email) "verification-token"))]
+      (do 
+        (if should-verify (util/wcar* (car/hdel email :verification-token)))
+        should-verify)))
+
 
