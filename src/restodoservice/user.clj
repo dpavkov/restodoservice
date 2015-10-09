@@ -39,4 +39,23 @@
         (if should-verify (util/wcar* (car/hdel email :verification-token)))
         should-verify)))
 
+;; hashes one of the refs and compares it with another
+(defn compare-with-hashed [ref hashed-ref]
+  (match-and-not-null (util/pbkdf2 ref) hashed-ref))
+
+;; performs login
+(defn login [email password]
+    (if (compare-with-hashed password ((util/lookup-hash email) "password"))
+      (let [token (str (java.util.UUID/randomUUID))]
+        (do 
+          (util/wcar* (car/hmset* token {:email email :created (java.util.Date.)}))
+          token))))
+
+(defn get-or-create-todo-uuid [user]
+  (if-let [todo-uuid (user "todo-uuid")] todo-uuid
+    (let [todo-uuid (str (java.util.UUID/randomUUID))]
+      (do
+        (util/wcar* (car/hmset* (user "email") { :todo-uuid todo-uuid }))
+        todo-uuid)))) 
+
 

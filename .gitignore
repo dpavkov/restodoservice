@@ -6,4 +6,4 @@ lib
 .lein-failures
 .lein-plugins/
 classes/
-
+.lein-repl-history

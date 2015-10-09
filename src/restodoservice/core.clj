@@ -6,6 +6,7 @@
             [clojure.edn :as edn]
             [restodoservice.util :as util]
             [restodoservice.user :as user]
+            [restodoservice.todo :as todo]
             [clojure.data.json :as json])
   (:gen-class))
 
@@ -32,19 +33,39 @@
   
   ;; Verifies user email, thus finishing registration process
   (ANY "/users/:email" [email] (resource :available-media-types ["application/json"]
-                                                      :allowed-methods [:patch]
-                                                      :malformed? #(util/parse-json % ::data)
-                                                      :exists? (fn [ctx] 
-                                                                 (let [entry (util/lookup-hash email)] 
-                                                                 (if-not (empty? entry) 
-                                                                   {::entry entry})))
-                                                      :handle-ok #(json/write-str (% :success-query))
-                                                      :respond-with-entity? true
-                                                      :patch! (fn [ctx] 
-                                                                {:success-query
-                                                                 {:verification-success 
-                                                                  (user/verify email 
-                                                                               (get-from-ctx ctx "verification-token"))}}))))
+                                         :allowed-methods [:patch]
+                                         :malformed? #(util/parse-json % ::data)
+                                         :exists? (fn [ctx] 
+                                                    (let [entry (util/lookup-hash email)] 
+                                                      (if-not (empty? entry) 
+                                                        {::entry entry})))
+                                         :handle-ok #(json/write-str (% :success-query))
+                                         :respond-with-entity? true
+                                         :patch! (fn [ctx] 
+                                                   {:success-query
+                                                    {:verification-success 
+                                                     (user/verify email 
+                                                                  (get-from-ctx ctx "verification-token"))}})))
+  
+ ;; Attempts login using email and password. returns authentication token.
+ ;; If login fails, authentication token will be null. 200 is returned in either case.
+  (ANY "/login" [] (resource :available-media-types ["application/json"]
+                             :allowed-methods [:post]
+                             :malformed? #(util/parse-json % ::data)
+                             :handle-created #(json/write-str (% :success-query))
+                             :post! (fn [ctx]
+                                      {:success-query
+                                       {:token 
+                                        (user/login (get-from-ctx ctx "email") 
+                                                    (get-from-ctx ctx "password"))}})))
+  (ANY "/todos" [] (resource :available-media-types ["application/json"]
+                             :allowed-methods [:post]
+                             :malformed? #(util/parse-json % ::data)
+                             :handle-created #(json/write-str (% ::data))
+                             :post! (fn [ctx] 
+                                      (todo/add-todo 
+                                        (ctx ::data) 
+                                        (util/lookup-hash (get-from-ctx ctx "email")))))))
 
 (def handler 
   (-> app 

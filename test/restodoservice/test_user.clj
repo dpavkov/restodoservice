@@ -8,3 +8,7 @@
   (is (not (user/match-and-not-null "asd" nil)))
   (is (not (user/match-and-not-null nil "asdf")))
   (is (not (user/match-and-not-null nil nil))))
+
+(deftest test-compare-with-hashed
+  (is (user/compare-with-hashed "1234" "9f607ec178c77601fdb25afb0785374c395a6103a8d93b5"))
+  (is (not (user/compare-with-hashed "9f607ec178c77601fdb25afb0785374c395a6103a8d93b5" "9f607ec178c77601fdb25afb0785374c395a6103a8d93b5"))))
