@@ -2,7 +2,7 @@
   (:require [ring.adapter.jetty :as jetty]
             [liberator.core :refer [resource defresource]]
             [ring.middleware.params :refer [wrap-params]]
-            [compojure.core :refer [defroutes ANY POST GET]]
+            [compojure.core :refer [defroutes ANY POST GET DELETE]]
             [clojure.edn :as edn]
             [restodoservice.util :as util]
             [restodoservice.user :as user]
@@ -10,6 +10,7 @@
             [clojure.data.json :as json])
   (:gen-class))
 
+;; retrieves the request param
 (defn- get-from-ctx [ctx field]
   (get-in ctx [::data field]))
 
@@ -18,6 +19,11 @@
   (if-let [user (user/verify-token 
                   (get-in ctx [:request :headers "x-authorization"]))] 
     {::user user}))
+
+;; retrieves user from ctx, reads the first todo and formats it. refactored for reuse
+(defn- read-first-todo [ctx]  
+  (json/write-str
+     (todo/read-first-todo (ctx ::user))))
 
 (defroutes app
   ;; handles registering users. POST method. Expects the body of the request to be filled with 3
@@ -90,9 +96,14 @@
   (ANY "/todos/first" [] (resource :available-media-types ["application/json"]
                                    :allowed-methods [:get]
                                    :authorized? #(authorize %)
-                                   :handle-ok (fn [ctx]
-                                                ((json/write-str
-                                                  (todo/read-first-todo (ctx ::user))))))))
+                                   :handle-ok #(read-first-todo %)))
+  ;; Deletes todo with the highest priority and returns todo with the next highest priority
+  (DELETE "/todos" [] (resource :available-media-types ["application/json"]
+                               :allowed-methods [:delete]
+                               :authorized? #(authorize %)
+                               :handle-ok #(read-first-todo %)
+                               :respond-with-entity? true
+                               :delete! (fn [ctx] (todo/delete (ctx ::user))))))
 
 (def handler 
   (-> app 

@@ -9,6 +9,8 @@
     (do (println todo-uuid) 
       (util/wcar* (car/zadd todo-uuid (to-do "score") (to-do "description"))))))
 
+;; transforms array to the map, where odd members are keys and even members are values
+;; e.g. ['123' 123 '456' 345] to {'123' 123, '456' 345}
 (defn zip-map-to-array [array]
   (let [keys (take-nth 2 array)
         vals (take-nth 2 (rest array))]
@@ -21,7 +23,12 @@
   (let [todo-uuid (user/get-or-create-todo-uuid user)]
         (zip-map-to-array  (util/wcar* (car/zrangebyscore todo-uuid 0 max :withscores)))))
 
+;; given user from the map, reads to-do with the highest priority and returns it.
 (defn read-first-todo [user]
-  (let [todo-uuid (user/get-or-create-todo-uuid user)
-        result (util/wcar* (car/zrange todo-uuid "0" "1" :withscores))]
-    {(first result) (second result)}))
+  (let [todo-uuid (user/get-or-create-todo-uuid user)]
+    (zip-map-to-array (util/wcar* (car/zrange todo-uuid "0" "0" :withscores)))))
+
+;; deletes todo with the highest priority
+(defn delete [user]
+    (let [todo-uuid (user/get-or-create-todo-uuid user)]
+          (util/wcar* (car/zremrangebyrank todo-uuid 0 0))))
