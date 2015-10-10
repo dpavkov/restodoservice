@@ -10,11 +10,11 @@
             [clojure.data.json :as json])
   (:gen-class))
 
-(defn get-from-ctx [ctx field]
+(defn- get-from-ctx [ctx field]
   (get-in ctx [::data field]))
 
 ;; retrieves x-authorization header and calls verify-token method to perform authorization
-(defn authorize [ctx]
+(defn- authorize [ctx]
   (if-let [user (user/verify-token 
                   (get-in ctx [:request :headers "x-authorization"]))] 
     {::user user}))
