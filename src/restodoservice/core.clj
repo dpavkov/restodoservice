@@ -2,7 +2,7 @@
   (:require [ring.adapter.jetty :as jetty]
             [liberator.core :refer [resource defresource]]
             [ring.middleware.params :refer [wrap-params]]
-            [compojure.core :refer [defroutes ANY]]
+            [compojure.core :refer [defroutes ANY POST GET]]
             [clojure.edn :as edn]
             [restodoservice.util :as util]
             [restodoservice.user :as user]
@@ -10,8 +10,13 @@
             [clojure.data.json :as json])
   (:gen-class))
 
-(defn get-from-ctx [ctx param]
-  (get-in ctx [::data param]))
+(defn get-from-ctx [ctx field]
+  (get-in ctx [::data field]))
+
+(defn authorize [ctx]
+  (if-let [user (user/verify-token 
+                  (get-in ctx [:request :headers "x-authorization"]))] 
+    {::user user}))
 
 (defroutes app
   ;; handles registering users. POST method. Expects the body of the request to be filled with 3
@@ -60,19 +65,25 @@
                                                     (get-from-ctx ctx "password"))}})))
   ;; Rest service for creating a new to-do. Must have authorization token in the header and it determines
   ;; a user for whom todo will be added. Body of the request must contain description of todo and a score,
-  ;; which determines a priority by wich todo will be regarded.
-  (ANY "/todos" [] (resource :available-media-types ["application/json"]
+  ;; which determines a priority by wich todo will be regarded. Lower score, lower priority
+  (POST "/todos" [] (resource :available-media-types ["application/json"]
                              :allowed-methods [:post]
                              :malformed? #(util/parse-json % ::data)
                              :handle-created #(json/write-str (% ::data))
-                             :authorized? (fn [ctx]                         
-                                            (if-let [user (user/verify-token 
-                                                            (get-in ctx [:request :headers "x-authorization"]))] 
-                                              {::user user}))
+                             :authorized? #(authorize %)
                              :post! (fn [ctx] 
                                       (todo/add-todo 
                                         (ctx ::data) 
-                                        (ctx ::user))))))
+                                        (ctx ::user)))))
+  ;; retrieves all todos for a user starting with score 0 and ending with score provided.
+  ;; returns json in a form description : score. e.g. 
+  ;; {"do something" : 5, "do something less important" : 10}
+  (GET "/todos/:max-score" [max-score] (resource :available-media-types ["application/json"]
+                                                 :allowed-methods [:get]
+                                                 :authorized? #(authorize %)
+                                                 :handle-ok (fn [ctx] 
+                                                              (json/write-str
+                                                                (todo/read-todos (ctx ::user) max-score))))))
 
 (def handler 
   (-> app 

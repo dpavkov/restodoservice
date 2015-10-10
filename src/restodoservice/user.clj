@@ -71,10 +71,10 @@
 ; For a given user, determines if he has todo-uuid. If he does, returns it, if not,
 ;; creates a new one, stores it and returns it.
 (defn get-or-create-todo-uuid [user]
-    (if-let [todo-uuid (user "todo-uuid")] todo-uuid
-      (let [todo-uuid (str (java.util.UUID/randomUUID))]
-        (do
-          (util/wcar* (car/hmset* (user "email") { "todo-uuid" todo-uuid }))
-          todo-uuid))))
+  (if-let [todo-uuid (user "todo-uuid")] todo-uuid
+    (let [todo-uuid (str (java.util.UUID/randomUUID))]
+      (do
+        (util/wcar* (car/hmset* (user "email") { "todo-uuid" todo-uuid }))
+        todo-uuid))))
 
 
