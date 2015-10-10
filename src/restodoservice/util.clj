@@ -6,7 +6,16 @@
   (:import
       java.security.SecureRandom
       javax.crypto.SecretKeyFactory
-      javax.crypto.spec.PBEKeySpec))
+      javax.crypto.spec.PBEKeySpec
+      org.eclipse.jetty.util.UrlEncoded
+      org.eclipse.jetty.util.MultiMap))
+
+;; Parses query string
+(defn parse-query-string [query]
+  (let [params (MultiMap.)]
+    (UrlEncoded/decodeTo query params "UTF-8")
+    (into {} params)))
+
 
 ;; Reads file properties. Props are stored as maps, so they can be accessed as (config :key)
 (def config (edn/read-string (slurp "config.edn")))

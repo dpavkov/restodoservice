@@ -13,6 +13,7 @@
 (defn get-from-ctx [ctx field]
   (get-in ctx [::data field]))
 
+;; retrieves x-authorization header and calls verify-token method to perform authorization
 (defn authorize [ctx]
   (if-let [user (user/verify-token 
                   (get-in ctx [:request :headers "x-authorization"]))] 
@@ -75,15 +76,23 @@
                                       (todo/add-todo 
                                         (ctx ::data) 
                                         (ctx ::user)))))
-  ;; retrieves all todos for a user starting with score 0 and ending with score provided.
+  ;; retrieves all todos for a user starting with score 0 and ending with score provided as query param.
   ;; returns json in a form description : score. e.g. 
   ;; {"do something" : 5, "do something less important" : 10}
-  (GET "/todos/:max-score" [max-score] (resource :available-media-types ["application/json"]
-                                                 :allowed-methods [:get]
-                                                 :authorized? #(authorize %)
-                                                 :handle-ok (fn [ctx] 
-                                                              (json/write-str
-                                                                (todo/read-todos (ctx ::user) max-score))))))
+  (GET "/todos" [] (resource :available-media-types ["application/json"]
+                             :allowed-methods [:get]
+                             :authorized? #(authorize %)
+                             :handle-ok (fn [ctx] 
+                                          (json/write-str
+                                            (todo/read-todos (ctx ::user) 
+                                                             ((util/parse-query-string (get-in ctx [:request :query-string])) "max-score"))))))
+  ;; retrieves todo with highest priority
+  (ANY "/todos/first" [] (resource :available-media-types ["application/json"]
+                                   :allowed-methods [:get]
+                                   :authorized? #(authorize %)
+                                   :handle-ok (fn [ctx]
+                                                ((json/write-str
+                                                  (todo/read-first-todo (ctx ::user))))))))
 
 (def handler 
   (-> app 

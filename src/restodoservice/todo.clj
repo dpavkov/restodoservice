@@ -18,3 +18,8 @@
         todos (take-nth 2 result)
         scores (take-nth 2 (rest result))]
     (zipmap todos scores)))
+
+(defn read-first-todo [user]
+  (let [todo-uuid (user/get-or-create-todo-uuid user)
+        result (util/wcar* (car/zrange todo-uuid "0" "1" :withscores))]
+    {(first result) (second result)}))
