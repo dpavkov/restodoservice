@@ -47,8 +47,8 @@
                                                      (user/verify email 
                                                                   (get-from-ctx ctx "verification-token"))}})))
   
- ;; Attempts login using email and password. returns authentication token.
- ;; If login fails, authentication token will be null. 200 is returned in either case.
+  ;; Attempts login using email and password. returns authentication token.
+  ;; If login fails, authentication token will be null. 200 is returned in either case.
   (ANY "/login" [] (resource :available-media-types ["application/json"]
                              :allowed-methods [:post]
                              :malformed? #(util/parse-json % ::data)
@@ -58,14 +58,21 @@
                                        {:token 
                                         (user/login (get-from-ctx ctx "email") 
                                                     (get-from-ctx ctx "password"))}})))
+  ;; Rest service for creating a new to-do. Must have authorization token in the header and it determines
+  ;; a user for whom todo will be added. Body of the request must contain description of todo and a score,
+  ;; which determines a priority by wich todo will be regarded.
   (ANY "/todos" [] (resource :available-media-types ["application/json"]
                              :allowed-methods [:post]
                              :malformed? #(util/parse-json % ::data)
                              :handle-created #(json/write-str (% ::data))
+                             :authorized? (fn [ctx]                         
+                                            (if-let [user (user/verify-token 
+                                                            (get-in ctx [:request :headers "x-authorization"]))] 
+                                              {::user user}))
                              :post! (fn [ctx] 
                                       (todo/add-todo 
                                         (ctx ::data) 
-                                        (util/lookup-hash (get-from-ctx ctx "email")))))))
+                                        (ctx ::user))))))
 
 (def handler 
   (-> app 

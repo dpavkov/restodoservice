@@ -16,9 +16,11 @@
 ;; Wraps redis command with the server connection params. Can chain multiple calls to redis. If that is the case, return type
 ;; will be an array consisting of all results, otherwise returns a single result.
 (defmacro wcar* [& body] `(car/wcar server-conn ~@body))
-;; Simple util function, for each hash field retrieves all fields
+;; Simple util function, for each hash field retrieves all fields. Nil if there's no hash
 (defn lookup-hash [identifier]
-  (wcar* (car/hgetall* identifier)))
+  (if identifier
+    (let [entity (wcar* (car/hgetall* identifier))]
+      (if (empty? entity) nil entity))))
 
 
 ;; Hashing algorithm, courtesy of http://adambard.com/blog/3-wrong-ways-to-store-a-password/

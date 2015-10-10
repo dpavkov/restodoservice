@@ -48,14 +48,33 @@
     (if (compare-with-hashed password ((util/lookup-hash email) "password"))
       (let [token (str (java.util.UUID/randomUUID))]
         (do 
-          (util/wcar* (car/hmset* token {:email email :created (java.util.Date.)}))
+          (util/wcar* (car/hmset* token {:email email :created (java.time.LocalDateTime/now)}))
           token))))
 
+;; a variable that determines how many minutes an authorization token will last.
+(def minutes-to-expire 20)
+
+;; Determines if token was created minutes-to-expire minutes before now()
+(defn expired-token? [token-created]
+  (.isBefore 
+    (.plusMinutes token-created minutes-to-expire)
+    (java.time.LocalDateTime/now)))
+
+;; Receives token as a string. Verifies that token is valid and not expired. Returns a map containing user data:
+;; { "email" email "password" password "todo-uuid" todo-uuid }
+(defn verify-token [token]
+  (if-let [token-data (util/lookup-hash token)]
+    (if-not (expired-token? (token-data "created"))
+      (let [email (token-data "email")] 
+        (assoc (util/lookup-hash email) "email" email)))))
+
+; For a given user, determines if he has todo-uuid. If he does, returns it, if not,
+;; creates a new one, stores it and returns it.
 (defn get-or-create-todo-uuid [user]
-  (if-let [todo-uuid (user "todo-uuid")] todo-uuid
-    (let [todo-uuid (str (java.util.UUID/randomUUID))]
-      (do
-        (util/wcar* (car/hmset* (user "email") { :todo-uuid todo-uuid }))
-        todo-uuid)))) 
+    (if-let [todo-uuid (user "todo-uuid")] todo-uuid
+      (let [todo-uuid (str (java.util.UUID/randomUUID))]
+        (do
+          (util/wcar* (car/hmset* (user "email") { "todo-uuid" todo-uuid }))
+          todo-uuid))))
 
 
