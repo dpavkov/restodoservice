@@ -26,6 +26,7 @@
      (todo/read-first-todo (ctx ::user))))
 
 (defroutes app
+  "Defines all handlers"
   ;; handles registering users. Expects the body of the request to be filled with 3
   ;; params: email, password and verification url. Creates an entry in db and sends a mail to the user for verification
   ;; verification token will be appended to the verification url in the mail. Client application is expected to 

@@ -41,3 +41,26 @@ Retrieves todo with highest priority. Must have authorization token in the heade
 * DELETE /todos
 
 Deletes todo with the highest priority and returns todo with the next highest priority. Must have authorization token in the header and it determines a user for whom todos will be retrieved.
+
+# Building restodoservice
+
+* Add config.edn to the root of the project with the following data:
+
+```
+{
+  :app-port _application-port_ 
+  :app-host _application_host_with_port_
+  :redis-host _redis-host_ 
+  :redis-port _redis-port_
+  :salt _salt-for-password-hash-gen_ 
+  :mail-host _mail-host_
+  :mail-username _mail-username_
+  :mail-password _mail-password_
+  }
+```
+
+* lein run
+
+# Testing restodoservice
+
+If you are using postman, in the project root you may find our sample collection: restodo.json.postman_collection
